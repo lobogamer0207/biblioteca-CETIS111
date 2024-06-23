@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca CETIS 111</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <div class="contenedorRef">
+        <h1>Registro de Referencias Bibliográficas en Formato APA</h1>
+        <div class="referenciasImagenes">
+            <h3 class="centered-text">*Las imagenes utilizadas en esta Página web son sacadas de internet, derechos reservados para los respectivos autores*</h3>
+        </div>
+        
+        <div id="referencesList">
+
+            <!-- Las referencias se agregarán aquí -->
+        </div>
+    </div>
+    <div class="creadores">
+        <p class="centered-text"><h3>Página elaborada por los alumnos del CENTRO DE ESTUDIOS TECNOLÓGICOS INDUSTRIAL Y DE SERVICIOS No.111 (CETIS 111) A cargo de la maestra: ing. Loreto Vite Hernández</h3>
+          <p class="centered-text">Elaborado por: </p>
+          <p class="centered-text">Pérez Hernández Juan Ángel</p>
+          <p class="centered-text">Álvarez Díaz Diego Emmanuel</p>
+          <p class="centered-text">Melchor de los santos Cesar Yasser</p>
+          <p class="centered-text">Gonzáles Guzmán Miguel Ángel</p>
+      </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            const referenceData = localStorage.getItem('newReference');
+            if (referenceData) {
+                const reference = JSON.parse(referenceData);
+                addReferenceToPage(reference);
+
+                // Guardar la referencia en el almacenamiento local para persistencia
+                saveReferenceToStorage(reference);
+
+                // Opcional: Eliminar la referencia del localStorage después de usarla
+                localStorage.removeItem('newReference');
+            }
+
+            // Cargar referencias existentes del almacenamiento local
+            loadReferencesFromStorage();
+        });
+
+        function addReferenceToPage(reference) {
+            const referenceElement = document.createElement('div');
+            referenceElement.className = 'reference';
+            referenceElement.innerHTML = `
+                ${reference.author}. ${reference.date}. ${reference.title}. ${reference.city}. ${reference.editorial}. Recuperado de: <a href="${reference.url}" >${reference.url}</a>
+            `;
+
+            document.getElementById('referencesList').appendChild(referenceElement);
+        }
+
+        function saveReferenceToStorage(reference) {
+            const references = JSON.parse(localStorage.getItem('references')) || [];
+            references.push(reference);
+            localStorage.setItem('references', JSON.stringify(references));
+        }
+
+        function loadReferencesFromStorage() {
+            const references = JSON.parse(localStorage.getItem('references')) || [];
+            references.forEach(reference => addReferenceToPage(reference));
+        }
+    </script>
+</body>
+</html>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #3d4753;
+    margin: 0;
+    padding: 20px;
+    max-width: 2000px;
+}
+
+.contenedorRef {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+#referencesList {
+    margin-top: 20px;
+    max-width: 900px;
+    display: inline;
+
+}
+
+.reference {
+    max-height: auto;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 5px solid #412dfa;
+    background: #7ec0f7;
+    border-radius: 16px;
+    word-wrap: break-word; /* Rompe las palabras largas en varias líneas si es necesario */
+}
+
+.reference a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.reference a:hover {
+    text-decoration: underline;
+}
+</style>
