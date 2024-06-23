@@ -5,125 +5,209 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="style.css">
     <title>biblioteca CETIS 111</title>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js"></script>
 </head>
 <body>
-    <!-- Resto de tu código HTML -->
+    <header>
+        <div class="audio">
+            <audio id="audio" source src="perfect-beauty-191271.mp3"></audio>
+            <button class="play" onclick="togglePlayPause()"><img class="on" id="play" src="img/apagado.png" onclick="cambiarImagen()"></button>
+        </div>
+        <div class="contenedorTitulop"> <h1 class="tituloPrincipal">INGLÉS</h1> </div>
+        <img class="logo-imagen" src="logo.png" alt="logo-imagen">
+    </header>
+    <h1 class="relleno">MECATRONICA</h1>
+    
+    <div class="contenedorBuscador1">
+        <input type="text" id="searchInput" placeholder="Buscar libros..." onkeyup="searchBooks()">
+        <button class="limpiarBuscador" onclick="clearSearchInput()">Limpiar</button>
+    </div>
+    
+        <div class="contenedorBuscaLetras">
+            <label class="buscador_primera_letra">Buscar por primera letra del título:</label>
+            <input type="text" id="searchInput2" maxlength="1">
+        </div>
+    
+        <!-- Botón para abrir el formulario modal -->
+    <button id="openFormButton">Nuevo Libro</button>
+    <button id="removeLastBookButton">Eliminar último libro</button>
+
+    <!-- Modal para agregar libros -->
+    <div id="addBookModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <form id="addBookForm">
+                <h1>Formulario para agregar libros:</h1>
+                <label>Agrega la portada del libro:</label>
+                <input type="text" id="bookImage" placeholder="URL de la imagen de portada del libro (debe terminar en el tipo de imagen que es)" required>
+                <input type="text" id="bookAuthor" placeholder="Autor del libro" required>
+                <input type="text" id="bookTitle" placeholder="Título del libro" required>
+                <input type="number" id="year" placeholder="Año (opcional)" min="0">
+                <input type="text" id="bookCity" placeholder="Ciudad" required>
+                <input type="text" id="bookEditorial" placeholder="Editorial" required>
+                <input type="text" id="bookLink" placeholder="URL del PDF del libro" required>
+                <button type="submit">Agregar Libro</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sección de libros -->
+    <div id="SectionNewBooks">
+        <!--Aqui apareceran los libros agregados-->
+    </div>
+
+    <div class="referencias">
+        <a href="biblioteca 2.html" class="boton">Inicio</a>
+    </div>
+    
+    <script src="script.js"></script>
     <script>
-        // Configuración de Firebase
-        const firebaseConfig = {
-            apiKey: "TU_API_KEY",
-            authDomain: "TU_AUTH_DOMAIN",
-            databaseURL: "TU_DATABASE_URL",
-            projectId: "TU_PROJECT_ID",
-            storageBucket: "TU_STORAGE_BUCKET",
-            messagingSenderId: "TU_MESSAGING_SENDER_ID",
-            appId: "TU_APP_ID"
+        const materia = 'ingles';
+
+        // Función para cargar libros desde el almacenamiento local
+function loadBooksFromStorage() {
+    const books = JSON.parse(localStorage.getItem(`books_${materia}`)) || [];
+    const validBooks = books.filter(book =>
+        book.title && book.author && book.image && book.url
+    );
+
+    // Ordenar los libros por el título alfabéticamente
+    validBooks.sort((a, b) => {
+    const titleA = a.title.toLowerCase();
+    const titleB = b.title.toLowerCase();
+    if (titleA < titleB) return -1;
+    if (titleA > titleB) return 1;
+    return 0;
+});
+
+    // Agregar cada libro ordenado a la página
+    validBooks.forEach(book => addBookToPage(book));
+}
+
+// Función para agregar un libro y su referencia
+function addBookAndReference(newBook) {
+    // Verificar si el libro ya está en la lista de libros mostrados
+    const books = document.querySelectorAll('.libro');
+    for (let i = 0; i < books.length; i++) {
+        const book = books[i];
+        const titleElement = book.querySelector('.titulos');
+        const authorElement = book.querySelector('.autor');
+
+        if (titleElement.innerText.toLowerCase() === newBook.title.toLowerCase() &&
+            authorElement.innerText.toLowerCase().includes(newBook.author.toLowerCase())) {
+            alert('El libro ya está en la lista.');
+            return;
+        }
+    }
+
+    // Verificar si la referencia ya existe en el almacenamiento local
+    const references = JSON.parse(localStorage.getItem('references')) || [];
+    for (let i = 0; i < references.length; i++) {
+        const reference = references[i];
+        if (reference.title.toLowerCase() === newBook.title.toLowerCase() &&
+            reference.author.toLowerCase().includes(newBook.author.toLowerCase())) {
+            alert('La referencia ya existe.');
+            return;
+        }
+    }
+
+    // Si no existe, agregar el libro y guardar la referencia
+    addBookToPage(newBook);
+    saveBookAndReference(newBook);
+}
+
+// Evento para el formulario de agregar libros
+document.addEventListener('DOMContentLoaded', function() {
+    loadBooksFromStorage();
+
+    document.getElementById('addBookForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const image = document.getElementById('bookImage').value;
+        const author = document.getElementById('bookAuthor').value;
+        const title = document.getElementById('bookTitle').value;
+        const city = document.getElementById('bookCity').value;
+        const editorial = document.getElementById('bookEditorial').value;
+        const url = document.getElementById('bookLink').value;
+        const newBook = {
+            image,
+            author,
+            title,
+            city,
+            editorial,
+            url,
         };
 
-        // Inicializar Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        addBookAndReference(newBook);
 
-        // Función para cargar libros desde `localStorage`
-        function loadBooksFromLocalStorage() {
-            const books = JSON.parse(localStorage.getItem('books_ingles')) || [];
-            for (const book of books) {
-                addBookToPage(book);
-            }
+        // Limpiar el formulario y cerrar el modal
+        document.getElementById('addBookForm').reset();
+        document.getElementById('addBookModal').style.display = 'none';
+    });
+
+    // Evento para el campo de búsqueda
+    document.getElementById('searchInput').addEventListener('input', searchBooks);
+
+    // Nueva funcionalidad para el modal
+    const modal = document.getElementById('addBookModal');
+    const btn = document.getElementById('openFormButton');
+    const span = document.getElementsByClassName('close')[0];
+
+    // Cuando el usuario hace clic en el botón, abre el modal
+    btn.onclick = function() {
+        modal.style.display = 'block';
+    }
+
+    // Cuando el usuario hace clic en la "x", cierra el modal
+    span.onclick = function() {
+        modal.style.display ='none';
+    }
+
+    // Cuando el usuario hace clic fuera del modal, cierra el modal
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
         }
+    }
+});
 
-        // Función para cargar libros desde Firebase
-        function loadBooksFromDatabase() {
-            const booksRef = firebase.database().ref('books_ingles');
-            booksRef.once('value', (snapshot) => {
-                const books = snapshot.val();
-                for (const id in books) {
-                    if (books.hasOwnProperty(id)) {
-                        addBookToPage(books[id]);
-                    }
-                }
-            });
-        }
+// Función para agregar un libro a la página
+function addBookToPage(book) {
+    const newBookDiv = document.createElement('div');
+    newBookDiv.classList.add('libro');
+    newBookDiv.innerHTML = `
+        <center><img class="contenedor-imagenes-libros" src="${book.image}"></center>
+        <h2 class="titulos">${book.title}</h2>
+        <center><p class="autor">Autor: ${book.author}</p></center>
+        <center><a href="${book.url}"><button>Ver Libro</button></a></center>
+    `;
+    document.querySelector('#SectionNewBooks').appendChild(newBookDiv);
+}
 
-        // Función para migrar libros de `localStorage` a Firebase
-        function migrateBooksToDatabase() {
-            const books = JSON.parse(localStorage.getItem('books_ingles')) || [];
-            const booksRef = firebase.database().ref('books_ingles');
-            for (const book of books) {
-                const newBookRef = booksRef.push();
-                newBookRef.set(book);
-            }
-            // Una vez migrados, puedes limpiar el `localStorage` si lo deseas
-            // localStorage.removeItem('books_ingles');
-        }
+// Función para guardar un libro y su referencia en el almacenamiento local
+function saveBookAndReference(book) {
+    const books = JSON.parse(localStorage.getItem(`books_${materia}`)) || [];
+    books.push(book);
+    localStorage.setItem(`books_${materia}`, JSON.stringify(books));
 
-        // Función para agregar un libro a la página
-        function addBookToPage(book) {
-            const newBookDiv = document.createElement('div');
-            newBookDiv.classList.add('libro');
-            newBookDiv.innerHTML = `
-                <center><img class="contenedor-imagenes-libros" src="${book.image}"></center>
-                <h2 class="titulos">${book.title}</h2>
-                <center><p class="autor">Autor: ${book.author}</p></center>
-                <center><a href="${book.url}"><button>Ver Libro</button></a></center>
-            `;
-            document.querySelector('#SectionNewBooks').appendChild(newBookDiv);
-        }
+    const reference = createReference(book);
+    const references = JSON.parse(localStorage.getItem('references')) || [];
+    references.push(reference);
+    localStorage.setItem('references', JSON.stringify(references));
+}
 
-        document.addEventListener('DOMContentLoaded', function() {
-            loadBooksFromLocalStorage();
-            loadBooksFromDatabase();
-            migrateBooksToDatabase();
-
-            document.getElementById('addBookForm').addEventListener('submit', function(event) {
-                event.preventDefault();
-                const image = document.getElementById('bookImage').value;
-                const author = document.getElementById('bookAuthor').value;
-                const title = document.getElementById('bookTitle').value;
-                const city = document.getElementById('bookCity').value;
-                const editorial = document.getElementById('bookEditorial').value;
-                const url = document.getElementById('bookLink').value;
-                const newBook = { image, author, title, city, editorial, url };
-
-                addBookToPage(newBook);
-                saveBookToDatabase(newBook);
-                document.getElementById('addBookForm').reset();
-                document.getElementById('addBookModal').style.display = 'none';
-            });
-
-            document.getElementById('searchInput').addEventListener('input', searchBooks);
-
-            const modal = document.getElementById('addBookModal');
-            const btn = document.getElementById('openFormButton');
-            const span = document.getElementsByClassName('close')[0];
-
-            btn.onclick = function() { modal.style.display = 'block'; }
-            span.onclick = function() { modal.style.display = 'none'; }
-            window.onclick = function(event) { if (event.target == modal) modal.style.display = 'none'; }
-
-            function searchBooks() {
-                const query = document.getElementById('searchInput').value.toLowerCase();
-                const books = document.querySelectorAll('.libro');
-                books.forEach(book => {
-                    const title = book.querySelector('.titulos').innerText.toLowerCase();
-                    book.style.display = title.includes(query) ? '' : 'none';
-                });
-            }
-
-            function clearSearchInput() {
-                document.getElementById('searchInput').value = '';
-                searchBooks();
-            }
-        });
-
-        // Función para guardar un libro en Firebase
-        function saveBookToDatabase(book) {
-            const booksRef = firebase.database().ref('books_ingles');
-            const newBookRef = booksRef.push();
-            newBookRef.set(book);
-        }
+// Función para crear una referencia APA a partir de un libro
+function createReference(book) {
+    const year = document.getElementById('year').value || 'S.F.'; // Si no hay año, usar "S.F."
+    const reference = {
+        title: book.title,
+        author: book.author,
+        date: `(${year})`,
+        city: book.city,
+        editorial: book.editorial,
+        url: book.url
+    };
+    return reference;
+}
     </script>
 </body>
 </html>
