@@ -1,0 +1,10 @@
+[
+    {
+        "image": "url_de_la_imagen",
+        "author": "autor_del_libro",
+        "title": "titulo_del_libro",
+        "city": "ciudad",
+        "editorial": "editorial",
+        "url": "url_del_pdf"
+    }
+]
