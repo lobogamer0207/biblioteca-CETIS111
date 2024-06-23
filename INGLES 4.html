@@ -22,12 +22,12 @@
         <button class="limpiarBuscador" onclick="clearSearchInput()">Limpiar</button>
     </div>
     
-        <div class="contenedorBuscaLetras">
-            <label class="buscador_primera_letra">Buscar por primera letra del título:</label>
-            <input type="text" id="searchInput2" maxlength="1">
-        </div>
+    <div class="contenedorBuscaLetras">
+        <label class="buscador_primera_letra">Buscar por primera letra del título:</label>
+        <input type="text" id="searchInput2" maxlength="1">
+    </div>
     
-        <!-- Botón para abrir el formulario modal -->
+    <!-- Botón para abrir el formulario modal -->
     <button id="openFormButton">Nuevo Libro</button>
     <button id="removeLastBookButton">Eliminar último libro</button>
 
@@ -61,153 +61,67 @@
     
     <script src="script.js"></script>
     <script>
-        const materia = 'ingles';
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('books.json')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(book => addBookToPage(book));
+                })
+                .catch(error => console.error('Error al cargar los libros:', error));
+        });
 
-        // Función para cargar libros desde el almacenamiento local
-function loadBooksFromStorage() {
-    const books = JSON.parse(localStorage.getItem(`books_${materia}`)) || [];
-    const validBooks = books.filter(book =>
-        book.title && book.author && book.image && book.url
-    );
-
-    // Ordenar los libros por el título alfabéticamente
-    validBooks.sort((a, b) => {
-    const titleA = a.title.toLowerCase();
-    const titleB = b.title.toLowerCase();
-    if (titleA < titleB) return -1;
-    if (titleA > titleB) return 1;
-    return 0;
-});
-
-    // Agregar cada libro ordenado a la página
-    validBooks.forEach(book => addBookToPage(book));
-}
-
-// Función para agregar un libro y su referencia
-function addBookAndReference(newBook) {
-    // Verificar si el libro ya está en la lista de libros mostrados
-    const books = document.querySelectorAll('.libro');
-    for (let i = 0; i < books.length; i++) {
-        const book = books[i];
-        const titleElement = book.querySelector('.titulos');
-        const authorElement = book.querySelector('.autor');
-
-        if (titleElement.innerText.toLowerCase() === newBook.title.toLowerCase() &&
-            authorElement.innerText.toLowerCase().includes(newBook.author.toLowerCase())) {
-            alert('El libro ya está en la lista.');
-            return;
+        function addBookToPage(book) {
+            const newBookDiv = document.createElement('div');
+            newBookDiv.classList.add('libro');
+            newBookDiv.innerHTML = `
+                <center><img class="contenedor-imagenes-libros" src="${book.image}"></center>
+                <h2 class="titulos">${book.title}</h2>
+                <center><p class="autor">Autor: ${book.author}</p></center>
+                <center><a href="${book.url}"><button>Ver Libro</button></a></center>
+            `;
+            document.querySelector('#SectionNewBooks').appendChild(newBookDiv);
         }
-    }
 
-    // Verificar si la referencia ya existe en el almacenamiento local
-    const references = JSON.parse(localStorage.getItem('references')) || [];
-    for (let i = 0; i < references.length; i++) {
-        const reference = references[i];
-        if (reference.title.toLowerCase() === newBook.title.toLowerCase() &&
-            reference.author.toLowerCase().includes(newBook.author.toLowerCase())) {
-            alert('La referencia ya existe.');
-            return;
+        // Eventos para el formulario de agregar libros y el campo de búsqueda
+        document.getElementById('addBookForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const image = document.getElementById('bookImage').value;
+            const author = document.getElementById('bookAuthor').value;
+            const title = document.getElementById('bookTitle').value;
+            const city = document.getElementById('bookCity').value;
+            const editorial = document.getElementById('bookEditorial').value;
+            const url = document.getElementById('bookLink').value;
+            const newBook = { image, author, title, city, editorial, url };
+
+            addBookToPage(newBook);
+            document.getElementById('addBookForm').reset();
+            document.getElementById('addBookModal').style.display = 'none';
+        });
+
+        document.getElementById('searchInput').addEventListener('input', searchBooks);
+
+        const modal = document.getElementById('addBookModal');
+        const btn = document.getElementById('openFormButton');
+        const span = document.getElementsByClassName('close')[0];
+
+        btn.onclick = function() { modal.style.display = 'block'; }
+        span.onclick = function() { modal.style.display = 'none'; }
+        window.onclick = function(event) { if (event.target == modal) modal.style.display = 'none'; }
+
+        // Función de búsqueda
+        function searchBooks() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const books = document.querySelectorAll('.libro');
+            books.forEach(book => {
+                const title = book.querySelector('.titulos').innerText.toLowerCase();
+                book.style.display = title.includes(query) ? '' : 'none';
+            });
         }
-    }
 
-    // Si no existe, agregar el libro y guardar la referencia
-    addBookToPage(newBook);
-    saveBookAndReference(newBook);
-}
-
-// Evento para el formulario de agregar libros
-document.addEventListener('DOMContentLoaded', function() {
-    loadBooksFromStorage();
-
-    document.getElementById('addBookForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-
-        const image = document.getElementById('bookImage').value;
-        const author = document.getElementById('bookAuthor').value;
-        const title = document.getElementById('bookTitle').value;
-        const city = document.getElementById('bookCity').value;
-        const editorial = document.getElementById('bookEditorial').value;
-        const url = document.getElementById('bookLink').value;
-        const newBook = {
-            image,
-            author,
-            title,
-            city,
-            editorial,
-            url,
-        };
-
-        addBookAndReference(newBook);
-
-        // Limpiar el formulario y cerrar el modal
-        document.getElementById('addBookForm').reset();
-        document.getElementById('addBookModal').style.display = 'none';
-    });
-
-    // Evento para el campo de búsqueda
-    document.getElementById('searchInput').addEventListener('input', searchBooks);
-
-    // Nueva funcionalidad para el modal
-    const modal = document.getElementById('addBookModal');
-    const btn = document.getElementById('openFormButton');
-    const span = document.getElementsByClassName('close')[0];
-
-    // Cuando el usuario hace clic en el botón, abre el modal
-    btn.onclick = function() {
-        modal.style.display = 'block';
-    }
-
-    // Cuando el usuario hace clic en la "x", cierra el modal
-    span.onclick = function() {
-        modal.style.display ='none';
-    }
-
-    // Cuando el usuario hace clic fuera del modal, cierra el modal
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = 'none';
+        function clearSearchInput() {
+            document.getElementById('searchInput').value = '';
+            searchBooks();
         }
-    }
-});
-
-// Función para agregar un libro a la página
-function addBookToPage(book) {
-    const newBookDiv = document.createElement('div');
-    newBookDiv.classList.add('libro');
-    newBookDiv.innerHTML = `
-        <center><img class="contenedor-imagenes-libros" src="${book.image}"></center>
-        <h2 class="titulos">${book.title}</h2>
-        <center><p class="autor">Autor: ${book.author}</p></center>
-        <center><a href="${book.url}"><button>Ver Libro</button></a></center>
-    `;
-    document.querySelector('#SectionNewBooks').appendChild(newBookDiv);
-}
-
-// Función para guardar un libro y su referencia en el almacenamiento local
-function saveBookAndReference(book) {
-    const books = JSON.parse(localStorage.getItem(`books_${materia}`)) || [];
-    books.push(book);
-    localStorage.setItem(`books_${materia}`, JSON.stringify(books));
-
-    const reference = createReference(book);
-    const references = JSON.parse(localStorage.getItem('references')) || [];
-    references.push(reference);
-    localStorage.setItem('references', JSON.stringify(references));
-}
-
-// Función para crear una referencia APA a partir de un libro
-function createReference(book) {
-    const year = document.getElementById('year').value || 'S.F.'; // Si no hay año, usar "S.F."
-    const reference = {
-        title: book.title,
-        author: book.author,
-        date: `(${year})`,
-        city: book.city,
-        editorial: book.editorial,
-        url: book.url
-    };
-    return reference;
-}
     </script>
 </body>
 </html>
